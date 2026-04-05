@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 export default defineConfig({
+    // GitHub Pages base URL - change 'saveitbro' to your repo name if different
+    base: process.env.GITHUB_PAGES === 'true' ? '/saveitbro/' : '/',
     plugins: [
         react(),
         {

@@ -1,39 +1,34 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
+const spaFallback = () => ({
+  name: 'spa-fallback',
+  configureServer(server) {
+    return () => {
+      server.middlewares.use((req, res, next) => {
+        // Check if the request is for a file/asset
+        if (/\.[a-z\d]+($|\?)/i.test(req.url) || req.url.startsWith('/node_modules')) {
+          return next()
+        }
+        
+        // Skip API routes
+        if (req.url.startsWith('/api') || req.url.startsWith('/fetch-info')) {
+          return next()
+        }
+        
+        // Rewrite all other requests to index.html for SPA routing
+        req.url = '/index.html'
+        return next()
+      })
+    }
+  }
+})
+
 export default defineConfig({
-  // GitHub Pages base URL - change 'saveitbro' to your repo name if different
   base: process.env.GITHUB_PAGES === 'true' ? '/saveitbro/' : '/',
   plugins: [
     react(),
-    {
-      name: 'spa-fallback',
-      configureServer(server: any) {
-        return () => {
-          server.middlewares.use((req: any, res: any, next: any) => {
-            // Skip if it's a static asset with file extension or is a known API route
-            if (req.url.match(/\.(js|css|json|png|svg|ico|webmanifest|html)($|\?)/)) {
-              return next()
-            }
-            
-            // Skip API routes to backend
-            if (req.url.startsWith('/api') || 
-                req.url.startsWith('/fetch-info') || 
-                req.url.startsWith('/download') ||
-                req.url.startsWith('/submit-issue')) {
-              return next()
-            }
-
-            // For all other GET requests, serve index.html for React Router to handle
-            if (req.method === 'GET') {
-              req.url = '/'
-            }
-            
-            next()
-          })
-        }
-      }
-    }
+    spaFallback(),
   ],
   server: {
     port: 3000,
